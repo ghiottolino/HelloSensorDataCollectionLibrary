@@ -3,9 +3,6 @@ package com.nicolatesser.hellosensordatacollectionlibrary;
 import java.io.File;
 import java.io.IOException;
 
-import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.SensorCollector;
-import com.nicolatesser.hellosensordatacollectionlibrary.util.SystemUiHider;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Build;
@@ -14,6 +11,10 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.TextView;
+
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.SensorCollector;
+import com.nicolatesser.hellosensordatacollectionlibrary.util.SystemUiHider;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -26,7 +27,7 @@ public class FullscreenActivity extends Activity {
 	 * Whether or not the system UI should be auto-hidden after
 	 * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
 	 */
-	private static final boolean AUTO_HIDE = true;
+	private static final boolean AUTO_HIDE = false;
 
 	/**
 	 * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
@@ -114,11 +115,11 @@ public class FullscreenActivity extends Activity {
 		contentView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				if (TOGGLE_ON_CLICK) {
-					mSystemUiHider.toggle();
-				} else {
-					mSystemUiHider.show();
-				}
+				// if (TOGGLE_ON_CLICK) {
+				// mSystemUiHider.toggle();
+				// } else {
+				// mSystemUiHider.show();
+				// }
 			}
 		});
 
@@ -143,9 +144,16 @@ public class FullscreenActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				if (!running) {
-					sensorCollector.start();
+							startOrResume();
+							running = true;
+							((TextView) findViewById(R.id.dummy_button))
+									.setText("Stop Logging");
+
 				} else {
 					sensorCollector.pause();
+							((TextView) findViewById(R.id.dummy_button))
+									.setText("Start Logging");
+							running = false;
 				}
 				
 				
@@ -153,6 +161,32 @@ public class FullscreenActivity extends Activity {
 				
 			}
 		});
+	}
+
+	public void startOrResume() {
+		if (sensorCollector.isStarted()) {
+			sensorCollector.resume();
+		} else {
+			sensorCollector.start();
+		}
+	}
+
+	@Override
+	protected void onResume() {
+		startOrResume();
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause() {
+		sensorCollector.pause();
+		super.onPause();
+	}
+
+	@Override
+	protected void onStop() {
+		sensorCollector.close();
+		super.onStop();
 	}
 
 	@Override
