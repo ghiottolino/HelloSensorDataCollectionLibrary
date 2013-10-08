@@ -14,6 +14,8 @@ import android.view.View.OnClickListener;
 import android.widget.TextView;
 
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.SensorCollector;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.NormalizedSensorData;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.SensorData;
 import com.nicolatesser.hellosensordatacollectionlibrary.util.SystemUiHider;
 
 /**
@@ -57,6 +59,10 @@ public class FullscreenActivity extends Activity {
 	private boolean running = false;
 	
 	
+	private TextView contentView = null;
+	
+	private SensorData sensorData;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -64,7 +70,7 @@ public class FullscreenActivity extends Activity {
 		setContentView(R.layout.activity_fullscreen);
 
 		final View controlsView = findViewById(R.id.fullscreen_content_controls);
-		final View contentView = findViewById(R.id.fullscreen_content);
+		contentView = (TextView) findViewById(R.id.content);
 
 		// Set up an instance of SystemUiHider to control the system UI for
 		// this activity.
@@ -131,39 +137,34 @@ public class FullscreenActivity extends Activity {
 		
 		
 		
+		//StringBuffer buffer = new StringBuffer();
 		
+		sensorData = new SensorData();
 		try {
-			sensorCollector = new SensorCollector(this, new File("/sdcard/Download/sensors.txt"));
+			//sensorCollector = new SensorCollector(this, new File("/sdcard/Download/sensors.txt"));
+			//sensorCollector = new SensorCollector(this,buffer);
+			sensorCollector = new SensorCollector(this,sensorData);
+			
+			
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		findViewById(R.id.dummy_button).setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				if (!running) {
-							startOrResume();
-							running = true;
-							((TextView) findViewById(R.id.dummy_button))
-									.setText("Stop Logging");
-
-				} else {
-					sensorCollector.pause();
-							((TextView) findViewById(R.id.dummy_button))
-									.setText("Start Logging");
-							running = false;
-				}
-				
-				
-
-				
-			}
-		});
+		findViewById(R.id.dummy_button).setOnClickListener(new SensorDataOnClickListener(sensorData));
 	}
 
 	public void startOrResume() {
+		if (sensorCollector.isClosed()){
+			try {
+				sensorCollector = new SensorCollector(this,sensorData);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		if (sensorCollector.isStarted()) {
 			sensorCollector.resume();
 		} else {
@@ -229,5 +230,45 @@ public class FullscreenActivity extends Activity {
 	private void delayedHide(int delayMillis) {
 		mHideHandler.removeCallbacks(mHideRunnable);
 		mHideHandler.postDelayed(mHideRunnable, delayMillis);
+	}
+	
+	
+	public class SensorDataOnClickListener implements OnClickListener{
+		
+		private SensorData sensorData;
+		
+		public SensorDataOnClickListener(SensorData sensorData){
+			this.sensorData= sensorData;
+		}
+		
+		@Override
+		public void onClick(View v) {
+			if (!running) {
+						startOrResume();
+						running = true;
+						((TextView) findViewById(R.id.dummy_button))
+								.setText("Stop Logging");
+						
+						
+
+			} else {
+				
+				sensorCollector.pause();
+						((TextView) findViewById(R.id.dummy_button))
+								.setText("Start Logging");
+						running = false;
+						
+				NormalizedSensorData normalize = sensorData.normalize();
+						
+				contentView.setText(normalize.toString());
+			}
+			
+			
+
+			
+		}
+		
+		
+		
 	}
 }

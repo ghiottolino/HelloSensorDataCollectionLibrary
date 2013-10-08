@@ -33,12 +33,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.SensorData;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.WifiData;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.WifiScanData;
+
 /**
  * A sensor log that produces a simple, line-oriented text file. The stream
  * auto-flushes periodically to avoid data loss if the log is not properly
  * closed.
  */
-public class TextFileSensorLog extends BaseSensorLog {
+public class InMemoryDataSensorLog extends BaseSensorLog {
   // We've been asked not to log SSIDs, but this log file format asks for them.
   // So we log "unknown" for the SSIDs of every access point we see.
   private static final String UNKNOWN_SSID = "UNKNOWN";
@@ -60,10 +64,8 @@ public class TextFileSensorLog extends BaseSensorLog {
   private static long overrideTimestamp = -1L;  // means unused.
 
   // The file we're writing.
-  private final File file;
+  private SensorData sensorData;
 
-  // A stream that's writing to our text file.
-  private PrintStream out;
 
   // The current line count.  Used to flush the stream every 100 lines.
   private int lineCount;
@@ -71,16 +73,16 @@ public class TextFileSensorLog extends BaseSensorLog {
   /**
    * Opens the given file for writing this sensor log.
    */
-  public TextFileSensorLog(File file) throws IOException {
-    this(file, "");
+  public InMemoryDataSensorLog(SensorData sensorData) throws IOException {
+    this(sensorData, "");
   }
 
   /**
    * Opens the given file for writing this sensor log, writing the given line of
    * notes to the file as it is opened.
    */
-  public TextFileSensorLog(File file, String notes) throws IOException {
-    this(file, notes, false);
+  public InMemoryDataSensorLog(SensorData sensorData, String notes) throws IOException {
+    this(sensorData, notes, false);
   }
 
   /**
@@ -90,21 +92,13 @@ public class TextFileSensorLog extends BaseSensorLog {
    * @param resume if true, the file is appended rather than overwritten. The
    *        metadata is written again, with a note that an append has occurred.
    */
-  public TextFileSensorLog(File file, String notes, boolean resume) throws IOException {
-    this.file = file;
-
-    // Ensure this file and its parent directory exists
-    File parent = file.getParentFile();
-    parent.mkdirs();
-
-    // start writing
-    out = new PrintStream(new BufferedOutputStream(new FileOutputStream(file, resume)), false);
+  public InMemoryDataSensorLog(SensorData sensorData, String notes, boolean resume) throws IOException {
+    this.sensorData = sensorData;
 
     // Log some meta-data
     logNote("metadata_log_format", LOG_FORMAT);
     logNote("metadata_system_time",
         String.valueOf(overrideTimestamp == -1 ? System.currentTimeMillis() : overrideTimestamp));
-    logNote("metadata_surveyName", file.getAbsolutePath());
     logNote("metadata_notes", notes.replaceAll("[\\n\\r\\f]", " "));
     logNote("metadata_deviceInfo", getDeviceInfo());
     if (resume) {
@@ -124,102 +118,111 @@ public class TextFileSensorLog extends BaseSensorLog {
     return builder.toString();
   }
 
-  public File getFile() {
-    return file;
-  }
-
   @Override
   public void close() {
-    if (out != null) {
-      out.close();
-    }
-    out = null;
+
+	  // TODO : make average/fingerprint
+	  
+	  
+	  
   }
 
   @Override
   protected void logGpsPosition(long absoluteTimeNanos, Location loc) {
-    writeLocationLine(absoluteTimeNanos, "latLngE7Gps", loc);
+	  sensorData.gpsLocations.add(loc);
   }
 
   @Override
   protected void logNetworkPosition(long absoluteTimeNanos, Location loc) {
-    writeLocationLine(absoluteTimeNanos, "latLngE7Network", loc);
+    sensorData.networkLocations.add(loc);
   }
 
   @Override
   protected void logGpsNmeaDataNanos(long absoluteTimeNanos, String nmeaData) {
-    writeLine(absoluteTimeNanos, "rawNmea", toFileString(nmeaData.trim()));
+	  //writeLine(absoluteTimeNanos, "rawNmea", toFileString(nmeaData.trim()));
   }
 
   @Override
   protected void logLastKnownPosition(long absoluteTimeNanos, Location loc) {
-    writeLocationLine(absoluteTimeNanos, "latLngE7LastKnown", loc);
+    //writeLocationLine(absoluteTimeNanos, "latLngE7LastKnown", loc);
   }
 
   @Override
   protected void logManualPosition(long absoluteTimeNanos, long latE7, long lngE7) {
-    writeLine(absoluteTimeNanos, "latLngE7Marker", "" + latE7 + " " + lngE7);
+    //writeLine(absoluteTimeNanos, "latLngE7Marker", "" + latE7 + " " + lngE7);
   }
 
   @Override
   protected void logPredictedPosition(
       long absoluteTimeNanos, long latE7, long lngE7, float accuracy) {
-    writeLine(absoluteTimeNanos, "latLngE7Predicted", "" + latE7 + " " + lngE7 + " " + accuracy);
+    //writeLine(absoluteTimeNanos, "latLngE7Predicted", "" + latE7 + " " + lngE7 + " " + accuracy);
+    
+    Location location = new Location("latLngE7Predicted");
+    location.setLatitude(latE7);
+    location.setLongitude(lngE7);
+    location.setAccuracy(accuracy);
+    sensorData.predictedPositions.add(location);
   }
 
   @Override
   protected void logUndoManualPosition(long absoluteTimeNanos) {
-    writeLine(absoluteTimeNanos, "latLngE7Marker", "CANCEL_LAST_MARKER");
+    //writeLine(absoluteTimeNanos, "latLngE7Marker", "CANCEL_LAST_MARKER");
   }
 
   @Override
   protected void logNote(long absoluteTimeNanos, String noteType, String note) {
     // ensure that notes don't have characters that would bust the file format,
     // like semicolons and newlines.
-    writeLine(absoluteTimeNanos, toFileString(noteType), toFileString(note));
+    //writeLine(absoluteTimeNanos, toFileString(noteType), toFileString(note));
   }
 
   @Override
   protected synchronized void logSensorEvent(long absoluteTimeNanos, SensorEvent event) {
-    writeTimestamp(absoluteTimeNanos);
-    writeSensorId(getSensorName(event.sensor.getType()), 
-      event.sensor.getName());
-
-    final int vCount = event.values.length;
-    final float[] values = event.values;
-
-    // write the first sensor value
-    if (vCount > 0) {
-      out.print(values[0]);
-    }
-    
-    // write the rest of the sensor values, space-separated
-    for (int i = 1; i < vCount; ++i) {
-      out.print(" ");
-      out.print(values[i]);
-    }
-    
-    // Now print out the accuracy
-    out.print(" "); 
-    out.print(event.accuracy); 
-    
-    finishLogLine();
+//    writeTimestamp(absoluteTimeNanos);
+//    writeSensorId(getSensorName(event.sensor.getType()), 
+//      event.sensor.getName());
+//
+//    final int vCount = event.values.length;
+//    final float[] values = event.values;
+//
+//    // write the first sensor value
+//    if (vCount > 0) {
+//     buffer.append(values[0]);
+//    }
+//    
+//    // write the rest of the sensor values, space-separated
+//    for (int i = 1; i < vCount; ++i) {
+//    	 buffer.append(" ");
+//    	 buffer.append(values[i]);
+//    }
+//    
+//    // Now print out the accuracy
+//    buffer.append(" "); 
+//    buffer.append(event.accuracy); 
+//    
+//    finishLogLine();
   }
  
 
   @Override
   protected void logWifiScan(long absoluteTimeNanos, Iterable<ScanResult> scans) {
     StringBuffer dataString = new StringBuffer();
+    WifiScanData wifiScanData = new WifiScanData();
     for (ScanResult sr : scans) {
       // NOTE: We have set the SSID to be a constant in the below.
       // This is to maintain backwards compatibility with existing formats
 
       if (shouldLog(sr)) {
-        dataString.append(sr.BSSID + "," + sr.SSID + "," + sr.level + " ");
+    	WifiData wifiData = new WifiData();
+    	wifiData.bssid = sr.BSSID;
+    	wifiData.ssid = sr.SSID;
+    	wifiData.level = sr.level;
+    	wifiScanData.wifiData.add(wifiData);
       }
     }
 
-    writeLine(absoluteTimeNanos, "wifi", dataString.toString());
+   // writeLine(absoluteTimeNanos, "wifi", dataString.toString());
+    sensorData.wifiScans.add(wifiScanData);
   }
   
   /**
@@ -258,7 +261,7 @@ public class TextFileSensorLog extends BaseSensorLog {
       b.append("\"" + info.toString() + "\" ");
     }
 
-    writeLine(absoluteTimeNanos, "telephony", b.toString());
+   // writeLine(absoluteTimeNanos, "telephony", b.toString());
   }
 
   /**
@@ -272,62 +275,57 @@ public class TextFileSensorLog extends BaseSensorLog {
     float bearing = loc.hasBearing() ? loc.getBearing() : -1.0f;
     float speed = loc.hasSpeed() ? loc.getSpeed() : -1.0f;
 
-    writeLine(absoluteTimeNanos, key, "" + latE7 + " " + lngE7 + " " + accuracy + " " + bearing
-        + " " + speed);
+//    writeLine(absoluteTimeNanos, key, "" + latE7 + " " + lngE7 + " " + accuracy + " " + bearing
+//        + " " + speed);
   }
 
   /**
    * Writes a line to the log file.
    */
-  private synchronized void writeLine(long absoluteTimeNanos, String sensor, String value) {
-    writeTimestamp(absoluteTimeNanos);
-    writeSensorType(sensor);
-    out.print(value);
-    finishLogLine();
-  }
+//  private synchronized void writeLine(long absoluteTimeNanos, String sensor, String value) {
+//    writeTimestamp(absoluteTimeNanos);
+//    writeSensorType(sensor);
+//    buffer.append(value);
+//    finishLogLine();
+//  }
 
   /**
    * Writes the timestamp prefix and separator to the log file.
    */
-  private void writeTimestamp(long absoluteTimeNanos) {
-    if (overrideTimestamp != -1) {
-      absoluteTimeNanos = overrideTimestamp;  // this only happens during tests
-    }
-
-    out.print(absoluteTimeNanos);
-    out.print(";");
-  }
+//  private void writeTimestamp(long absoluteTimeNanos) {
+//    if (overrideTimestamp != -1) {
+//      absoluteTimeNanos = overrideTimestamp;  // this only happens during tests
+//    }
+//
+//    buffer.append(absoluteTimeNanos);
+//    buffer.append(";");
+//  }
   
   /**
    * Writes the sensor name type and separator to the log file.
    */
-  private void writeSensorType(String sensorType) {
-    out.print(sensorType);
-    out.print(";");
-  }
+//  private void writeSensorType(String sensorType) {
+//	  buffer.append(sensorType);
+//	  buffer.append(";");
+//  }
   
   /**
    * Writes the sensor type, sensor name and separator to the log file. 
    */
-  private void writeSensorId(String sensorType, String sensorName) {
-    out.print(sensorType);
-    out.print("/"); 
-    out.print(sensorName); 
-    out.print(";");
-  }
+//  private void writeSensorId(String sensorType, String sensorName) {
+//	  buffer.append(sensorType);
+//	  buffer.append("/"); 
+//	  buffer.append(sensorName); 
+//	  buffer.append(";");
+//  }
 
   /**
    * Writes a newline to the log file, and updates the line counters. Handles
    * flushing.
    */
   private void finishLogLine() {
-    out.print("\n");
-
-    // flush the buffer every 100 lines
     lineCount++;
-    if ((lineCount % 100) == 0) {
-      out.flush();
-    }
+
   }
 
   /**
@@ -365,6 +363,6 @@ public class TextFileSensorLog extends BaseSensorLog {
    * time, or -1 to restore normal timestamp logging.
    */
   static void setTimestampForTest(long overrideTimestamp) {
-    TextFileSensorLog.overrideTimestamp = overrideTimestamp;
+    InMemoryDataSensorLog.overrideTimestamp = overrideTimestamp;
   }
 }

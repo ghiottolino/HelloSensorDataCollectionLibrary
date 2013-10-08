@@ -38,7 +38,7 @@ import java.util.Set;
  * auto-flushes periodically to avoid data loss if the log is not properly
  * closed.
  */
-public class TextFileSensorLog extends BaseSensorLog {
+public class InMemorySensorLog extends BaseSensorLog {
   // We've been asked not to log SSIDs, but this log file format asks for them.
   // So we log "unknown" for the SSIDs of every access point we see.
   private static final String UNKNOWN_SSID = "UNKNOWN";
@@ -60,10 +60,8 @@ public class TextFileSensorLog extends BaseSensorLog {
   private static long overrideTimestamp = -1L;  // means unused.
 
   // The file we're writing.
-  private final File file;
+  private StringBuffer buffer;
 
-  // A stream that's writing to our text file.
-  private PrintStream out;
 
   // The current line count.  Used to flush the stream every 100 lines.
   private int lineCount;
@@ -71,16 +69,16 @@ public class TextFileSensorLog extends BaseSensorLog {
   /**
    * Opens the given file for writing this sensor log.
    */
-  public TextFileSensorLog(File file) throws IOException {
-    this(file, "");
+  public InMemorySensorLog(StringBuffer buffer) throws IOException {
+    this(buffer, "");
   }
 
   /**
    * Opens the given file for writing this sensor log, writing the given line of
    * notes to the file as it is opened.
    */
-  public TextFileSensorLog(File file, String notes) throws IOException {
-    this(file, notes, false);
+  public InMemorySensorLog(StringBuffer buffer, String notes) throws IOException {
+    this(buffer, notes, false);
   }
 
   /**
@@ -90,21 +88,13 @@ public class TextFileSensorLog extends BaseSensorLog {
    * @param resume if true, the file is appended rather than overwritten. The
    *        metadata is written again, with a note that an append has occurred.
    */
-  public TextFileSensorLog(File file, String notes, boolean resume) throws IOException {
-    this.file = file;
-
-    // Ensure this file and its parent directory exists
-    File parent = file.getParentFile();
-    parent.mkdirs();
-
-    // start writing
-    out = new PrintStream(new BufferedOutputStream(new FileOutputStream(file, resume)), false);
+  public InMemorySensorLog(StringBuffer buffer, String notes, boolean resume) throws IOException {
+    this.buffer = buffer;
 
     // Log some meta-data
     logNote("metadata_log_format", LOG_FORMAT);
     logNote("metadata_system_time",
         String.valueOf(overrideTimestamp == -1 ? System.currentTimeMillis() : overrideTimestamp));
-    logNote("metadata_surveyName", file.getAbsolutePath());
     logNote("metadata_notes", notes.replaceAll("[\\n\\r\\f]", " "));
     logNote("metadata_deviceInfo", getDeviceInfo());
     if (resume) {
@@ -124,16 +114,12 @@ public class TextFileSensorLog extends BaseSensorLog {
     return builder.toString();
   }
 
-  public File getFile() {
-    return file;
-  }
-
   @Override
   public void close() {
-    if (out != null) {
-      out.close();
+    if (buffer != null) {
+    	buffer.delete(0, buffer.length());
     }
-    out = null;
+    buffer = null;
   }
 
   @Override
@@ -181,29 +167,29 @@ public class TextFileSensorLog extends BaseSensorLog {
 
   @Override
   protected synchronized void logSensorEvent(long absoluteTimeNanos, SensorEvent event) {
-    writeTimestamp(absoluteTimeNanos);
-    writeSensorId(getSensorName(event.sensor.getType()), 
-      event.sensor.getName());
-
-    final int vCount = event.values.length;
-    final float[] values = event.values;
-
-    // write the first sensor value
-    if (vCount > 0) {
-      out.print(values[0]);
-    }
-    
-    // write the rest of the sensor values, space-separated
-    for (int i = 1; i < vCount; ++i) {
-      out.print(" ");
-      out.print(values[i]);
-    }
-    
-    // Now print out the accuracy
-    out.print(" "); 
-    out.print(event.accuracy); 
-    
-    finishLogLine();
+//    writeTimestamp(absoluteTimeNanos);
+//    writeSensorId(getSensorName(event.sensor.getType()), 
+//      event.sensor.getName());
+//
+//    final int vCount = event.values.length;
+//    final float[] values = event.values;
+//
+//    // write the first sensor value
+//    if (vCount > 0) {
+//     buffer.append(values[0]);
+//    }
+//    
+//    // write the rest of the sensor values, space-separated
+//    for (int i = 1; i < vCount; ++i) {
+//    	 buffer.append(" ");
+//    	 buffer.append(values[i]);
+//    }
+//    
+//    // Now print out the accuracy
+//    buffer.append(" "); 
+//    buffer.append(event.accuracy); 
+//    
+//    finishLogLine();
   }
  
 
@@ -282,7 +268,7 @@ public class TextFileSensorLog extends BaseSensorLog {
   private synchronized void writeLine(long absoluteTimeNanos, String sensor, String value) {
     writeTimestamp(absoluteTimeNanos);
     writeSensorType(sensor);
-    out.print(value);
+    buffer.append(value);
     finishLogLine();
   }
 
@@ -294,26 +280,26 @@ public class TextFileSensorLog extends BaseSensorLog {
       absoluteTimeNanos = overrideTimestamp;  // this only happens during tests
     }
 
-    out.print(absoluteTimeNanos);
-    out.print(";");
+    buffer.append(absoluteTimeNanos);
+    buffer.append(";");
   }
   
   /**
    * Writes the sensor name type and separator to the log file.
    */
   private void writeSensorType(String sensorType) {
-    out.print(sensorType);
-    out.print(";");
+	  buffer.append(sensorType);
+	  buffer.append(";");
   }
   
   /**
    * Writes the sensor type, sensor name and separator to the log file. 
    */
   private void writeSensorId(String sensorType, String sensorName) {
-    out.print(sensorType);
-    out.print("/"); 
-    out.print(sensorName); 
-    out.print(";");
+	  buffer.append(sensorType);
+	  buffer.append("/"); 
+	  buffer.append(sensorName); 
+	  buffer.append(";");
   }
 
   /**
@@ -321,13 +307,10 @@ public class TextFileSensorLog extends BaseSensorLog {
    * flushing.
    */
   private void finishLogLine() {
-    out.print("\n");
+	  buffer.append("\n");
 
-    // flush the buffer every 100 lines
     lineCount++;
-    if ((lineCount % 100) == 0) {
-      out.flush();
-    }
+
   }
 
   /**
@@ -365,6 +348,6 @@ public class TextFileSensorLog extends BaseSensorLog {
    * time, or -1 to restore normal timestamp logging.
    */
   static void setTimestampForTest(long overrideTimestamp) {
-    TextFileSensorLog.overrideTimestamp = overrideTimestamp;
+    InMemorySensorLog.overrideTimestamp = overrideTimestamp;
   }
 }

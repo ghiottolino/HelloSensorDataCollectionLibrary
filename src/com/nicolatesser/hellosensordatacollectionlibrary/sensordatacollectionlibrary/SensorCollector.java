@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.SensorData;
+
 /**
  * Manages the phone's sensors and gathers the data they produce into a given
  * log. The SensorCollector has no impact until it is start()ed. A collection
@@ -93,8 +95,24 @@ public class SensorCollector
    */
   public SensorCollector(Context context, File sensorLogFile) throws IOException {
     this(context, new TextFileSensorLog(sensorLogFile));
-
   }
+  
+  /**
+   * Creates a collector that will write to the given file.
+   */
+  public SensorCollector(Context context, StringBuffer buffer) throws IOException {
+    this(context, new InMemorySensorLog(buffer));
+  }
+  
+  
+  
+  /**
+   * Creates a collector that will write to the given file.
+   */
+  public SensorCollector(Context context, SensorData sensorData) throws IOException {
+    this(context, new InMemoryDataSensorLog(sensorData));
+  }
+  
 
   /**
    * Creates a collector that will write to the given log.
