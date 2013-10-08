@@ -156,8 +156,12 @@ public class FullscreenActivity extends Activity {
 	}
 
 	public void startOrResume() {
+		
+		sensorData = new SensorData();
+		
 		if (sensorCollector.isClosed()){
 			try {
+				
 				sensorCollector = new SensorCollector(this,sensorData);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -244,6 +248,7 @@ public class FullscreenActivity extends Activity {
 		@Override
 		public void onClick(View v) {
 			if (!running) {
+						
 						startOrResume();
 						running = true;
 						((TextView) findViewById(R.id.dummy_button))

@@ -7,6 +7,8 @@ import android.location.Location;
 
 public class NormalizedSensorData {
 
+	public String id;
+	
 	public Location gpsLocation;
 	
 	public Location networkLocation;
@@ -16,7 +18,7 @@ public class NormalizedSensorData {
 	public WifiScanData wifiScan;
 	
 
-	public String toString(){
+	public String getContent(){
 		StringBuffer toReturn = new StringBuffer();
 		toReturn.append("\n");
 		toReturn.append("\n");
@@ -28,19 +30,22 @@ public class NormalizedSensorData {
 
 		
 		if (wifiScan!=null && (wifiScan.wifiData!=null)){
-			toReturn.append("WIFI SCAN RESULT\n");
+			toReturn.append("*** WIFI SCAN RESULT \n\n");
 			for(WifiData wifiData : wifiScan.wifiData){
 				toReturn.append(toString(wifiData));
 			}
 		}
 		
-
-		
-		
-		
 		return toReturn.toString();
 		
 	}
+	
+	
+	public String toString(){
+		return id;
+	}
+	
+	
 	
 	
 	public StringBuffer toString(String title, Location location){

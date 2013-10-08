@@ -1,6 +1,7 @@
 package com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class SensorData {
 	public NormalizedSensorData normalize(){
 		
 		NormalizedSensorData normalizedSensorData = new NormalizedSensorData();
+				
 		normalizedSensorData.gpsLocation=averageLocation(gpsLocations);
 		normalizedSensorData.networkLocation=averageLocation(networkLocations);
 		normalizedSensorData.predictedPosition=averageLocation(predictedPositions);
