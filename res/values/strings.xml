@@ -2,14 +2,11 @@
 <resources>
 
     <string name="app_name">Location Logger</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="title_location_list">Locations</string>
     <string name="title_location_detail">Location Detail</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">Sensors</string>
     <string name="action_home">Home</string>
     <string name="action_list">List Positions</string>
-    
     <string name="hello_world">Hello world!</string>
 
 </resources>

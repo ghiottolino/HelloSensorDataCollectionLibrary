@@ -1,18 +1,21 @@
 package com.nicolatesser.hellosensordatacollectionlibrary;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.nicolatesser.hellosensordatacollectionlibrary.FullscreenActivity.SensorDataOnClickListener;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.LocationLoggerService;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.LocationMatcherService;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.SensorCollector;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.LocationMatchResult;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.NormalizedSensorData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.SensorData;
 
 import android.os.Bundle;
 import android.os.Handler;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
@@ -123,13 +126,33 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 			            public void run() {
 			               	sensorCollector.close();
 			            	NormalizedSensorData normalizedInputSensorData = inputSensorData.normalize();
-							NormalizedSensorData match = LocationLoggerService.getInstance().matchLocation(normalizedInputSensorData);
+							List<LocationMatchResult> result = LocationMatcherService.getInstance().matchLocation(normalizedInputSensorData);
 							String message = "I could not match any location from the stored location database";
-							if (match!=null){
-								message = "The matched location is "+ match.id;
+							if (result!=null && !result.isEmpty()){
+								
+								
+								
+								message = "The matched location is "+ result.get(0).location.id + "\n\n";
+								
+								for (LocationMatchResult locationMatchResult: result){
+									message+= "Position "+locationMatchResult.location.id+" matches with score "+locationMatchResult.score+ "\n";
+								}
+								
+								
+								
+								
 							}
 							
-							Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+							
+							
+							AlertDialog alertDialog = new AlertDialog.Builder(getApplicationContext()).create();
+							alertDialog.setTitle("Match Results");
+							alertDialog.setMessage(message);
+							alertDialog.show();
+							
+							
+							
+							//Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
 			            }
 			        };
 			        
