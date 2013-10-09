@@ -34,12 +34,14 @@ public class MainActivity extends Activity {
 		
 	private SensorData sensorData;
 	
+	private AlertDialog alertDialog;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+		alertDialog = new AlertDialog.Builder(this).create();
+			
 		sensorData = new SensorData();
 		try {
 
@@ -145,7 +147,7 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 							
 							
 							
-							AlertDialog alertDialog = new AlertDialog.Builder(getApplicationContext()).create();
+					
 							alertDialog.setTitle("Match Results");
 							alertDialog.setMessage(message);
 							alertDialog.show();

@@ -9,8 +9,8 @@ public class LocationMatchResult implements Comparable<LocationMatchResult>{
 	@Override
 	public int compareTo(LocationMatchResult another) {
 		if (this.score==another.score) return 0;
-		else if  (this.score<another.score) return -1;
-		else return 1;
+		else if  (this.score<another.score) return 1;
+		else return -1;
 	}
 
 }
