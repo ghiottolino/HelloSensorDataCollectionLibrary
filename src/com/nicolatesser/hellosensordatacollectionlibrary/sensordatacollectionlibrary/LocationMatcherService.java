@@ -12,6 +12,7 @@ import java.util.Set;
 import android.location.Location;
 
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.LocationMatchResult;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.MagnetometerData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.NormalizedSensorData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.WifiData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.WifiScanData;
@@ -79,6 +80,7 @@ public class LocationMatcherService {
 		int NETWORK_LOCATION_MULTIPLIER = 1;
 		int PREDICTED_LOCATION_MULTIPLIER = 1;
 		int WIFI_MULTIPLIER = 2;
+		int MAGNETOMETER_MULTIPLIER = 2;
 		
 		
 		score+=GPS_LOCATION_MULTIPLIER*compareLocation(knownSensorData.gpsLocation,inputSensorData.gpsLocation);
@@ -86,9 +88,59 @@ public class LocationMatcherService {
 		score+=PREDICTED_LOCATION_MULTIPLIER*compareLocation(knownSensorData.predictedPosition,inputSensorData.predictedPosition);
 		
 		score+=WIFI_MULTIPLIER*compareWifiData(knownSensorData.wifiScan, inputSensorData.wifiScan);
+		score+=MAGNETOMETER_MULTIPLIER*compareMagnetometerData(knownSensorData.magnetometerData, inputSensorData.magnetometerData);
+		
 		
 		return score;
 	}
+	
+	
+	private float compareMagnetometerData(
+			MagnetometerData knownMagnetometerData,
+			MagnetometerData inputMagnetometerData) {
+		
+		float score = 0;
+		if (knownMagnetometerData==null || inputMagnetometerData==null){
+			return score;
+		}
+		
+		float distancex = Math.abs(knownMagnetometerData.x - inputMagnetometerData.x);
+		float distancey = Math.abs(knownMagnetometerData.y - inputMagnetometerData.y);
+		float distancez = Math.abs(knownMagnetometerData.z - inputMagnetometerData.z);
+
+		float distance =distancex+distancey+distancez;
+		
+		score = proportionalScore(distance, 100);
+		
+		return score;
+	}
+	
+	
+	
+	/**
+	 * Return a score (from 0 to 100) given a distance and a max
+	 * distance==max --> 0
+	 * distance==0 -->100
+	 *
+	 * score = ((max-distance)/max)*100
+	 * 
+	 * @param distance
+	 * @param scaleMax the maximum of the scale, if the distance is bigger, score is null
+	 * @return
+	 */
+	private float proportionalScore(float distance, float scaleMax){
+		float score = 0;
+		if (distance>=scaleMax) score= 0;
+		else if (distance==0){
+			score= 100;
+		}
+		else{
+			score= ((scaleMax-distance)/scaleMax)*100;
+		}
+		
+		return score;
+	}
+	
 	
 	
 	private float compareLocation(
@@ -103,16 +155,9 @@ public class LocationMatcherService {
 		float[] results = new float[1];
 		Location.distanceBetween(knownLocation.getLatitude(), knownLocation.getLongitude(), inputLocation.getLatitude(), inputLocation.getLongitude(), results);
 		
-		float distanceInMeter = results[0];
+		float distanceInMeter =  Math.abs(results[0]);
 		
-		if (distanceInMeter>30) score= 0;
-		else if (distanceInMeter==0){
-			score= 100;
-		}
-		else{
-			score= 100/distanceInMeter;
-		}
-		
+		score = proportionalScore(distanceInMeter, 30);
 		
 		score = score * inputLocation.getAccuracy()/100 * knownLocation.getAccuracy()/100;
 		

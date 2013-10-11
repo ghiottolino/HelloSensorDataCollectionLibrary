@@ -32,5 +32,15 @@
         android:layout_alignLeft="@+id/matchLocation"
         android:layout_below="@+id/matchLocation"
         android:text="Write Locations Log" />
+     
+     
+     <Button
+        android:id="@+id/printCurrentLocation"
+        style="?buttonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/printLocations"
+        android:layout_below="@+id/printLocations"
+        android:text="Write Current Locations Log" />
 
 </RelativeLayout>

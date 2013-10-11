@@ -17,6 +17,8 @@ public class NormalizedSensorData {
 	
 	public WifiScanData wifiScan;
 	
+	public MagnetometerData magnetometerData;
+	
 
 	public String getContent(){
 		StringBuffer toReturn = new StringBuffer();
@@ -27,6 +29,7 @@ public class NormalizedSensorData {
 		toReturn.append(toString("GPS Location",gpsLocation));
 		toReturn.append(toString("Network Location",networkLocation));
 		toReturn.append(toString("Predicted Location",predictedPosition));
+		toReturn.append(toString(magnetometerData));
 
 		
 		if (wifiScan!=null && (wifiScan.wifiData!=null)){
@@ -45,7 +48,17 @@ public class NormalizedSensorData {
 		return id;
 	}
 	
-	
+	public StringBuffer toString(MagnetometerData magnetometerData){
+		StringBuffer toReturn = new StringBuffer();
+		if (magnetometerData!=null){
+			toReturn.append("Magnetometer"+"\n\n");
+			toReturn.append("x:"+magnetometerData.x+"\n");
+			toReturn.append("y:"+magnetometerData.y+"\n");
+			toReturn.append("z:"+magnetometerData.z+"\n");
+			toReturn.append("\n");	
+		}
+		return toReturn;
+	}
 	
 	
 	public StringBuffer toString(String title, Location location){

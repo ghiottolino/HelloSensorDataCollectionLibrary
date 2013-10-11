@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.MagnetometerData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.SensorData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.WifiData;
 import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.WifiScanData;
@@ -178,6 +179,17 @@ public class InMemoryDataSensorLog extends BaseSensorLog {
 
   @Override
   protected synchronized void logSensorEvent(long absoluteTimeNanos, SensorEvent event) {
+	  
+	  if (event.sensor.getType()==Sensor.TYPE_MAGNETIC_FIELD){
+		  final float[] values = event.values;
+		  MagnetometerData magnetometerData = new MagnetometerData();
+		  magnetometerData.x = values[0];
+		  magnetometerData.z = values[1];
+		  magnetometerData.y = values[2];
+		  sensorData.magnetometerData.add(magnetometerData);
+	  }
+	
+	  
 //    writeTimestamp(absoluteTimeNanos);
 //    writeSensorId(getSensorName(event.sensor.getType()), 
 //      event.sensor.getName());

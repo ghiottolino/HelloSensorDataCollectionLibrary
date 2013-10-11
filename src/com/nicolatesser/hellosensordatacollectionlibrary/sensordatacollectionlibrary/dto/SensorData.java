@@ -19,6 +19,10 @@ public class SensorData {
 	
 	public List<WifiScanData> wifiScans = new ArrayList<WifiScanData>();
 	
+	public List<MagnetometerData> magnetometerData = new ArrayList<MagnetometerData>();
+	
+	
+	
 
 	public NormalizedSensorData normalize(){
 		
@@ -30,10 +34,39 @@ public class SensorData {
 		
 		normalizedSensorData.wifiScan =averageWifiScanData(wifiScans);
 		
+		normalizedSensorData.magnetometerData =averageMagnetometerData(magnetometerData);
+		
 		return normalizedSensorData;
 	}
 	
 	
+	public MagnetometerData averageMagnetometerData(
+			List<MagnetometerData> magnetometerDataList) {
+		if (magnetometerDataList.isEmpty()) return null;
+		else{
+			MagnetometerData averageMagnetometerData = new MagnetometerData();
+			
+			float x = 0;
+			float y = 0;
+			float z = 0;
+
+			int n = magnetometerDataList.size();
+			for (MagnetometerData magnetometer : magnetometerDataList){
+				x+=(magnetometer.x/n);
+				y+=(magnetometer.y/n);
+				z+=(magnetometer.z/n);
+			}
+			
+			averageMagnetometerData.x=x;
+			averageMagnetometerData.y=y;
+			averageMagnetometerData.z=z;
+
+			return averageMagnetometerData;
+		}
+
+	}
+
+
 	public Location averageLocation(List<Location> locations){
 		if (locations.isEmpty()) return null;
 		else{
