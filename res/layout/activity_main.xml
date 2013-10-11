@@ -23,5 +23,14 @@
         android:layout_alignLeft="@+id/storeLocation"
         android:layout_below="@+id/storeLocation"
         android:text="Match Location" />
+    
+     <Button
+        android:id="@+id/printLocations"
+        style="?buttonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/matchLocation"
+        android:layout_below="@+id/matchLocation"
+        android:text="Write Locations Log" />
 
 </RelativeLayout>

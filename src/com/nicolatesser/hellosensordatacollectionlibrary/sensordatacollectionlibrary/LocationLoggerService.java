@@ -1,5 +1,11 @@
 package com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -63,134 +69,31 @@ public class LocationLoggerService {
 		
 	}
 	
-	
-	
-	// TODO : separate in another service
-	
-	public NormalizedSensorData matchLocation(NormalizedSensorData inputSensorData){
+	public void writeLocationsLog() throws IOException{
 		
-		Collection<NormalizedSensorData> values = locations.values();
+		File file = new File("/sdcard/Download/locationsLog.txt");
+		// if file doesn't exists, then create it
+		if (!file.exists()) {
+			file.createNewFile();
+		}
+					
+		FileOutputStream out = new FileOutputStream(file, false);
+
+		List<NormalizedSensorData> storedLocations = getLocations();
 		
-		NormalizedSensorData bestMatch = null;
-		int bestScore = 0;
-		
-		
-		for (NormalizedSensorData knownSensorData : values){
-			int score = compareNormalizedSensorData(knownSensorData , inputSensorData);
-			if (score>bestScore){
-				bestScore=score;
-				bestMatch = knownSensorData;
-			}
-			
+		String content = "";
+		for (NormalizedSensorData storedLocation: storedLocations){
+			content+="***********************\n";
+			content+=storedLocation.id+"\n\n";
+			content+="***********************\n";
+			content+=storedLocation.getContent()+"\n\n";	
 		}
 		
-		return bestMatch;
+		byte[] contentInBytes = content.getBytes();
+		out.write(contentInBytes);
+		out.flush();
+		out.close();
 		
 	}
-
-
-
-	private int compareNormalizedSensorData(
-			NormalizedSensorData knownSensorData,
-			NormalizedSensorData inputSensorData) {
-		
-		int score = 0;
-		
-		int GPS_LOCATION_MULTIPLIER = 1;
-		int NETWORK_LOCATION_MULTIPLIER = 1;
-		int PREDICTED_LOCATION_MULTIPLIER = 1;
-		int WIFI_MULTIPLIER = 2;
-		
-		
-		score+=GPS_LOCATION_MULTIPLIER*compareLocation(knownSensorData.gpsLocation,inputSensorData.gpsLocation);
-		score+=NETWORK_LOCATION_MULTIPLIER*compareLocation(knownSensorData.networkLocation,inputSensorData.networkLocation);
-		score+=PREDICTED_LOCATION_MULTIPLIER*compareLocation(knownSensorData.predictedPosition,inputSensorData.predictedPosition);
-		
-		score+=WIFI_MULTIPLIER*compareWifiData(knownSensorData.wifiScan, inputSensorData.wifiScan);
-		
-		return score;
-	}
-	
-	
-	private float compareLocation(
-			Location knownLocation,
-			Location inputLocation) {
-		
-		float score = 0;
-		if (knownLocation==null || inputLocation==null){
-			return score;
-		}
-		
-		float[] results = new float[1];
-		Location.distanceBetween(knownLocation.getLatitude(), knownLocation.getLongitude(), inputLocation.getLatitude(), inputLocation.getLongitude(), results);
-		
-		float distanceInMeter = results[0];
-		
-		if (distanceInMeter>30) score= 0;
-		else if (distanceInMeter==0){
-			score= 100;
-		}
-		else{
-			score= 100/distanceInMeter;
-		}
-		
-		
-		score = score * inputLocation.getAccuracy()/100 * knownLocation.getAccuracy()/100;
-		
-		return score;
-	}
-	
-	
-
-	private float compareWifiData(
-			WifiScanData knownWifiScanData,
-			WifiScanData inputWifiScanData) {
-		
-		float score = 0;
-	
-		if (knownWifiScanData==null || inputWifiScanData==null){
-			return score;
-		} 
-		
-		Map<String, WifiData> knownWifiMap = knownWifiScanData.getAsMap();
-		Map<String, WifiData> inputWifiMap = inputWifiScanData.getAsMap();
-			
-		int averageScanSize = (knownWifiMap.size()+inputWifiMap.size())/2;
-		
-		Set<String> inputKeys = inputWifiMap.keySet();
-		
-		for (String inputKey:inputKeys){
-			float keyScore = 0;
-			
-			WifiData inputWifiData = inputWifiMap.get(inputKey);
-			WifiData knownWifiData = knownWifiMap.get(inputKey);
-			
-			if (knownWifiData!=null && inputWifiData!=null){
-				
-				int diffLevel = Math.abs(knownWifiData.level - inputWifiData.level);
-				
-				if (diffLevel>80) score= 0;
-				else if (diffLevel==0){
-					keyScore= 100;
-				}
-				else{
-					keyScore= 100/diffLevel;
-				}
-				
-				keyScore = keyScore * inputWifiData.accuracy/100 * knownWifiData.accuracy/100;
-				
-				score += keyScore;  // /averageScanSize
-			}
-			
-		}
-
-		return score;
-	}
-	
-	
-	
-	
-	
-	
 	
 }

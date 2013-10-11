@@ -1,5 +1,6 @@
 package com.nicolatesser.hellosensordatacollectionlibrary;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Timer;
@@ -46,18 +47,27 @@ public class MainActivity extends Activity {
 		try {
 
 			sensorCollector = new SensorCollector(this,sensorData);
-			
-			
-			
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Toast.makeText(getApplicationContext(), e.getMessage(),Toast.LENGTH_LONG).show();
 		}
 		
 		findViewById(R.id.storeLocation).setOnClickListener(new SensorDataOnClickListener(sensorData));
 		
 		findViewById(R.id.matchLocation).setOnClickListener(new LocationMatcherOnClickListener());
 		
+		findViewById(R.id.printLocations).setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+
+				try {
+					LocationLoggerService.getInstance().writeLocationsLog();
+				} catch (IOException e) {
+					Toast.makeText(getApplicationContext(), e.getMessage(),Toast.LENGTH_LONG).show();
+				}
+			}
+		});
 		
 		
 		
@@ -74,8 +84,8 @@ public class MainActivity extends Activity {
 				
 				sensorCollector = new SensorCollector(this,sensorData);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Toast.makeText(getApplicationContext(), e.getMessage(),Toast.LENGTH_LONG).show();
+    			
 			}
 		}
 		
@@ -128,6 +138,11 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 			            public void run() {
 			               	sensorCollector.close();
 			            	NormalizedSensorData normalizedInputSensorData = inputSensorData.normalize();
+			            	
+			            	if (normalizedInputSensorData.wifiScan.wifiData.isEmpty()){
+			    				Toast.makeText(getApplicationContext(), "Could not find any Wifi signal, so there are little chances that this location will be correclty recognized. If you know that there is a wifi signal, please try again",Toast.LENGTH_LONG).show();
+			    			}
+			            	
 							List<LocationMatchResult> result = LocationMatcherService.getInstance().matchLocation(normalizedInputSensorData);
 							String message = "I could not match any location from the stored location database";
 							if (result!=null && !result.isEmpty()){
@@ -170,7 +185,7 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 			            }
 			        };
 	
-			        timer.schedule(task, 1000); 
+			        timer.schedule(task, 2000); 
 			        
 				} catch (IOException e) {
 
@@ -200,26 +215,55 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 						((Button) findViewById(R.id.storeLocation))
 								.setText("Stop Logging this Location");
 						
-						
+						final Timer timer = new Timer();
+				        final Handler handler = new Handler();
+				        final Runnable stopCollectingDataRunnable = new Runnable() {
+				            @Override
+				            public void run() {
+				            	stopCollectingData();
+				            }
+						};
+						TimerTask task = new TimerTask() {
+				            @Override
+				            public void run() {
+				            	handler.post(stopCollectingDataRunnable);
 
+				    			
+				            }
+				        };
+		
+				        timer.schedule(task, 2000); 
+
+						
+						
+						
+						
+						
 			} else {
 				
-				sensorCollector.pause();
-						((Button) findViewById(R.id.storeLocation))
-								.setText("Log this Location");
-						running = false;
-						
-				NormalizedSensorData data = sensorData.normalize();
-						
-				LocationLoggerService.getInstance().storeLocation(data);
+				stopCollectingData();
 
 			}
 			
-			
-
-			
 		}
 		
+		
+		private void stopCollectingData() {
+			sensorCollector.pause();
+			((Button) findViewById(R.id.storeLocation))
+					.setText("Log this Location");
+			running = false;
+
+			NormalizedSensorData data = sensorData.normalize();
+
+			if (data.wifiScan.wifiData.isEmpty()){
+				Toast.makeText(getApplicationContext(), "Could not find any Wifi signal, this location will be ignored. If you know that there is a wifi signal, please try again",Toast.LENGTH_LONG).show();
+			}
+			else{
+				LocationLoggerService.getInstance().storeLocation(data);
+			}
+			
+		}
 		
 		
 	}

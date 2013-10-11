@@ -134,8 +134,7 @@ public class LocationMatcherService {
 		Map<String, WifiData> knownWifiMap = knownWifiScanData.getAsMap();
 		Map<String, WifiData> inputWifiMap = inputWifiScanData.getAsMap();
 			
-		int averageScanSize = (knownWifiMap.size()+inputWifiMap.size())/2;
-		
+	
 		Set<String> inputKeys = inputWifiMap.keySet();
 		
 		for (String inputKey:inputKeys){
@@ -163,11 +162,42 @@ public class LocationMatcherService {
 			
 		}
 
+		
+		float missingWifiDataScore = compareMissingWifiData(knownWifiMap, inputWifiMap);
+		
+		score = score * missingWifiDataScore / 100;
+		
+		
 		return score;
 	}
 	
 	
 	
+	private float compareMissingWifiData(Map<String, WifiData> knownWifiMap,Map<String, WifiData> inputWifiMap){
+		
+		float score = 0;
+		Set<String> knownKeys = knownWifiMap.keySet();
+		Set<String> inputKeys = inputWifiMap.keySet();
+		
+		int knownKeysSize = knownKeys.size();
+		int inputKeysSize = inputKeys.size();
+		
+		inputKeys.retainAll(knownKeys); // for intersection
+		int intersectionSize = inputKeys.size();
+		
+		
+		
+		int delta = knownKeysSize+inputKeysSize-(intersectionSize*2);
+		
+		if (delta==0){
+			score = 100;
+		}
+		else{
+			score = 100 - (100*delta/(knownKeysSize+inputKeysSize));
+		}
+		
+		return score;
+	}
 	
 	
 	

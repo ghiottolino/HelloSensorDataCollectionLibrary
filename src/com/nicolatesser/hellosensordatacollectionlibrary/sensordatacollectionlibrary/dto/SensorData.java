@@ -66,12 +66,17 @@ public class SensorData {
 	public WifiScanData averageWifiScanData(List<WifiScanData> wifiScans){
 		WifiScanData averageWifiScanData = new WifiScanData();
 		int n = wifiScans.size();
-		
+		int numberOfNonEmptyScans = 0;
 		Map<String,List<WifiData>> wifiDataMap = new HashMap<String, List<WifiData>>();
 		
 		for (WifiScanData wifiScanData:wifiScans){
 			
+			if (!wifiScanData.wifiData.isEmpty()){
+				numberOfNonEmptyScans++;
+			}
+			
 			for (WifiData wifiData : wifiScanData.wifiData){
+			
 				if (wifiDataMap.get(wifiData.bssid)==null){
 					wifiDataMap.put(wifiData.bssid, new ArrayList<WifiData>());
 				}
@@ -86,27 +91,33 @@ public class SensorData {
 		for (String bssidKey: bssidKeys)
 		{
 			List<WifiData> bssidWifiData = wifiDataMap.get(bssidKey);
-			averageWifiScanData.wifiData.add(averageWifiData(bssidWifiData, n));
+			averageWifiScanData.wifiData.add(averageWifiData(bssidWifiData, numberOfNonEmptyScans));
 		}
 	
 		return averageWifiScanData;
 	}
 	
 	
-	public WifiData averageWifiData(List<WifiData> wifiData, int numberOfScans){
+	public WifiData averageWifiData(List<WifiData> wifiData, int numberOfNonEmptyScans){
 		WifiData averageWifiData = new WifiData();
 		averageWifiData.bssid = wifiData.get(0).bssid;
 		averageWifiData.ssid = wifiData.get(0).ssid;
 		
 
 		float level = 0;
-		float accuracy = 0;
 		int n = wifiData.size();
+		
+		float accuracy = (n/numberOfNonEmptyScans)*100;
+		
 		
 		for (WifiData wifiSignal : wifiData){
 			level+=(wifiSignal.level/n);	
-			accuracy+=100/numberOfScans;
+			
 		}
+		
+
+		
+		
 		
 		
 		averageWifiData.level = Math.round(level);
