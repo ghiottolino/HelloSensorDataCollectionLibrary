@@ -69,7 +69,15 @@ public class MainActivity extends Activity {
 			}
 		});
 		
-		
+		findViewById(R.id.showNormalizedMagnetField).setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(getApplicationContext(), MagnetFieldActivity.class);
+				startActivity(intent);
+				
+			}
+		});
 		
 	}
 
@@ -244,7 +252,6 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 				stopCollectingData();
 
 			}
-			
 		}
 		
 		
@@ -267,6 +274,15 @@ public class LocationMatcherOnClickListener implements OnClickListener{
 		
 		
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	
 	

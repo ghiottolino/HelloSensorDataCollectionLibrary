@@ -8,5 +8,7 @@
     <string name="action_home">Home</string>
     <string name="action_list">List Positions</string>
     <string name="hello_world">Hello world!</string>
+    <string name="title_activity_magnet_field">MagnetFieldActivity</string>
+    <string name="action_settings">Settings</string>
 
 </resources>
