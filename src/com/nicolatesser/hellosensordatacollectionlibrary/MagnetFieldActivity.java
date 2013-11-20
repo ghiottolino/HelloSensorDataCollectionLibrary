@@ -1,19 +1,112 @@
 package com.nicolatesser.hellosensordatacollectionlibrary;
 
+import java.io.IOException;
+
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.LocationLoggerService;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.SensorCollector;
+import com.nicolatesser.hellosensordatacollectionlibrary.sensordatacollectionlibrary.dto.SensorData;
+
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.hardware.SensorManager;
 import android.support.v4.app.NavUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Toast;
 
 public class MagnetFieldActivity extends Activity {
 
+
+	private SensorCollector sensorCollector;
+	
+	private boolean running = false;
+		
+	private SensorData sensorData;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_magnet_field);
+		
+		sensorData = new SensorData();
+		try {
+
+			sensorCollector = new SensorCollector(this,sensorData);
+
+		} catch (IOException e) {
+			Toast.makeText(getApplicationContext(), e.getMessage(),Toast.LENGTH_LONG).show();
+		}
+		
+		startOrResume();
+		
+		findViewById(R.id.stopCollecting).setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if (sensorCollector!=null){
+					sensorCollector.pause();
+				}
+				
+			}
+		});
+		
+		
+		
+		
+		
+		
 	}
+	
+//	
+//	public void updateSensorsDisplay(){
+//		SensorManager.getRotationMatrix(R, I, gravity, geomagnetic)()
+//		SensorManager.getOrientation(R, values);
+//		
+//	}
+	
+	
+	
+	
+	
+	public void startOrResume() {
+		
+		sensorData = new SensorData();
+		
+		if (sensorCollector.isClosed()){
+			try {
+				
+				sensorCollector = new SensorCollector(this,sensorData);
+			} catch (IOException e) {
+				Toast.makeText(getApplicationContext(), e.getMessage(),Toast.LENGTH_LONG).show();
+    			
+			}
+		}
+		
+		if (sensorCollector.isStarted()) {
+			sensorCollector.resume();
+		} else {
+			sensorCollector.start();
+		}
+	}
+
+
+	@Override
+	protected void onPause() {
+		sensorCollector.pause();
+		super.onPause();
+	}
+
+	@Override
+	protected void onStop() {
+		sensorCollector.close();
+		super.onStop();
+	}
+	
+	
+	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -57,5 +150,6 @@ public class MagnetFieldActivity extends Activity {
 
 		return super.onOptionsItemSelected(item);
 	}
+	
 
 }

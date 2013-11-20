@@ -188,6 +188,8 @@ public class InMemoryDataSensorLog extends BaseSensorLog {
 		  magnetometerData.y = values[2];
 		  sensorData.magnetometerData.add(magnetometerData);
 	  }
+	  
+	  
 	
 	  
 //    writeTimestamp(absoluteTimeNanos);
