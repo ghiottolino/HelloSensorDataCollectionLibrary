@@ -33,6 +33,12 @@
         android:layout_height="wrap_content"
         android:text="z:" />
     
+        <TextView
+        android:id="@+id/magnet_field_accuracy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="accuracy:" />
+    
     
   <TextView
         android:layout_width="wrap_content"
@@ -56,6 +62,33 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="z:" />
+    
+    
+    
+        
+  <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Normalized MF:" />
+
+    <TextView
+        android:id="@+id/n_x"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x:" />
+
+    <TextView
+        android:id="@+id/n_y"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="y:" />
+
+    <TextView
+        android:id="@+id/n_z"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="z:" />
+    
     
     
     <Button
