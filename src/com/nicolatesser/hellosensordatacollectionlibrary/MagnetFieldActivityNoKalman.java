@@ -4,16 +4,6 @@ package com.nicolatesser.hellosensordatacollectionlibrary;
 
 import java.security.acl.LastOwnerException;
 
-import org.apache.commons.math3.filter.DefaultMeasurementModel;
-import org.apache.commons.math3.filter.DefaultProcessModel;
-import org.apache.commons.math3.filter.KalmanFilter;
-import org.apache.commons.math3.filter.MeasurementModel;
-import org.apache.commons.math3.filter.ProcessModel;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-
 import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -29,7 +19,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.widget.TextView;
 
-public class MagnetFieldActivity extends Activity implements SensorEventListener {
+public class MagnetFieldActivityNoKalman extends Activity implements SensorEventListener {
     /* sensor data */
     SensorManager m_sensorManager;
     float []m_lastMagFields;
@@ -72,17 +62,6 @@ public class MagnetFieldActivity extends Activity implements SensorEventListener
     private float m_tiltCentreX = 0.f;
     private float m_tiltCentreY = 0.f;
     private float m_tiltCentreZ = 0.f;
-    
-
-    /** Kalman vars. */
-    private double[] previousKalmanStateX;
-    private double[] previousKalmanStateY;
-    private double[] previousKalmanStateZ;
-    private KalmanFilter filter;
-    public static final int KALMAN_STATE_MAX_SIZE = 80;
-    public static final double MEASUREMENT_NOISE = 5;
-    
-    float m_lastKx = 0.f;
 
     /** Rates. */
     private float nanoTtoGRate = 0.00001f;
@@ -95,33 +74,9 @@ public class MagnetFieldActivity extends Activity implements SensorEventListener
         setContentView(R.layout.activity_magnet_field);
         m_sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         registerListeners();
-        initKalman();
     }
 
-    private RealMatrix H;
-    private RealMatrix A;
-    RealVector x = new ArrayRealVector(new double[] { 0 });
-    
-    private void initKalman() {
-    	// A = [ 1 ]
-    	A = new Array2DRowRealMatrix(new double[] { 1d });
-    	// no control input
-    	RealMatrix B = null;
-    	// H = [ 1 ]
-    	H = new Array2DRowRealMatrix(new double[] { 1d });
-    	// Q = [ 0 ]
-    	RealMatrix Q = new Array2DRowRealMatrix(new double[] { 0 });
-    	// R = [ 0 ]
-    	RealMatrix R = new Array2DRowRealMatrix(new double[] { 0 });
-    	
-    	ProcessModel pm
-    	   = new DefaultProcessModel(A, B, Q, x, null);
-    	MeasurementModel mm = new DefaultMeasurementModel(H, R);
-    	filter = new KalmanFilter(pm, mm);
-		
-	}
-
-	private void registerListeners() {
+    private void registerListeners() {
         m_sensorManager.registerListener(this, m_sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
         m_sensorManager.registerListener(this, m_sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
         m_sensorManager.registerListener(this, m_sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION), SensorManager.SENSOR_DELAY_GAME);
@@ -293,56 +248,6 @@ public class MagnetFieldActivity extends Activity implements SensorEventListener
             m_lastNy = resultVec[1];
             m_lastNz = resultVec[2];
             
-            boolean kalmanFiletring = false;
-            if (kalmanFiletring) {
-            	
-            	                        //double[] currentKalmanStateX = new KalmanState(MEASUREMENT_NOISE, accelerometerValues[0], (double)resultVec[0], previousKalmanStateX);
-//            	                        previousKalmanStateX = currentKalmanStateX;
-            	                        
-            							RealVector pNoise = new ArrayRealVector(1);
-            							pNoise.setEntry(0, MEASUREMENT_NOISE);
-            							RealVector mNoise = new ArrayRealVector(1);
-            							mNoise.setEntry(0, m_lastAccels[0]);
-            							
-            							//x = x.append(resultVec[0]);
-            							x.setEntry(0, resultVec[0]);
-            							
-            							
-            							x = A.operate(x).add(pNoise);
-            							// z = H * x + m_noise
-                						RealVector z = H.operate(x).add(mNoise);
-            	                        filter.correct(z);
-            	                        
-            	                        double[] currentKalmanStateX = filter.getStateEstimation();
-            	                        
-            	                        double kalmanX = currentKalmanStateX[0];
-            	                        
-            	//
-//            	                        KalmanState currentKalmanStateY = new KalmanState(MEASUREMENT_NOISE, accelerometerValues[1], (double)resultVec[1], previousKalmanStateY);
-//            	                        previousKalmanStateY = currentKalmanStateY;
-            	//
-//            	                        KalmanState currentKalmanStateZ = new KalmanState(MEASUREMENT_NOISE, accelerometerValues[2], (double)resultVec[2], previousKalmanStateZ);
-//            	                        previousKalmanStateZ = currentKalmanStateZ;
-            	//
-//            	                        if (previousKalmanStateCounter == KALMAN_STATE_MAX_SIZE) {
-//            	                            magneticXTextView.setText("x: " + previousKalmanStateX.getX_estimate());
-//            	                            magneticYTextView.setText("y: " + previousKalmanStateY.getX_estimate());
-//            	                            magneticZTextView.setText("z: " + previousKalmanStateZ.getX_estimate());
-            	//
-//            	                            resetKalmanFilter();
-//            	                        } else {
-//            	                            previousKalmanStateCounter++;
-//            	                        }
-            	//
-//            	                    } else {
-//            	                        magneticXTextView.setText("x: " + resultVec[0]);
-//            	                        magneticYTextView.setText("y: " + resultVec[1]);
-//            	                        magneticZTextView.setText("z: " + resultVec[2]);
-//            	                    }
-            
-            
-            }
-            
             
             
             updateSensorsDisplay();
@@ -381,8 +286,7 @@ public class MagnetFieldActivity extends Activity implements SensorEventListener
         ny.setText("n y: " + m_lastNy);
         nz.setText("n z: " + m_lastNz);
         
-        TextView kX = (TextView) findViewById(R.id.k_x);
-        nx.setText("k x: " + m_lastKx);
+        
         
         
         

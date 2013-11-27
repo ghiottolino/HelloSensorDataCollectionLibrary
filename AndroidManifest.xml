@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.VIBRATE" />
-    
+
     <uses-sdk
         android:minSdkVersion="11"
         android:targetSdkVersion="18" />
@@ -52,6 +52,7 @@
             android:name="com.nicolatesser.hellosensordatacollectionlibrary.MagnetFieldActivity"
             android:label="@string/title_activity_magnet_field" >
         </activity>
+    
     </application>
 
 </manifest>

@@ -89,6 +89,16 @@
         android:layout_height="wrap_content"
         android:text="z:" />
     
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Kalman Mormalized MF:" />
+    
+     <TextView
+        android:id="@+id/k_x"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x:" />
     
     
     <Button
